@@ -503,7 +503,7 @@ if(length(obj.list)>1)
  {
  # Integrate data with batch correction
  
-obj.integrated<-cca_batch_correction(obj.list,project.name=args$file_prefix,genes=args$batch_genes,verbose=args$verbose)
+obj.integrated<-cca_batch_correction(obj.list,project.name=args$file_prefix, anchors=args$hvg, int.genes=args$batch_genes, verbose=args$verbose)
 
 }else{
    obj.integrated=obj.list[[1]]
@@ -511,6 +511,10 @@ obj.integrated<-cca_batch_correction(obj.list,project.name=args$file_prefix,gene
 
 ### Add meta data ###
 
+# Add sample column
+obj.integrated[['sample']]<-obj.integrated[['orig.ident']]
+
+# Add metadata from file (if specified)
 if(args$meta_file!='')
 {
 obj.integrated<-add_metadata(obj.integrated,args$meta_file)
@@ -524,17 +528,19 @@ if((args$save=='integrated')||(args$save=='both'))
   saveRDS(obj.integrated,file=paste0(args$output_dir,args$file_prefix,"integrated_only.rds"))
  }
 
-### Pre-clustering ###
+### Pre-clustering processing ###
+
+DefaultAssay(obj.integrated)<-'integrated'
 
 # Scale data
-
+if(args$verbose)
+{cat('Running PCA on integrated data')}
   all.features<-rownames(obj.integrated)
   obj.integrated<-ScaleData(obj.integrated,features=all.features, verbose=args$verbose)
  
 # Run PCA
 
   obj.integrated<-RunPCA(obj.integrated, npcs=50,ndims.print = 1:15, verbose=args$verbose)
-  obj.integrated[['sample']]<-obj.integrated[['orig.ident']]
 
 
 ### PCA Plots ###
@@ -554,12 +560,13 @@ pca_plots<-marrangeGrob(pc_genes_plot_list, nrow=2, ncol=2)
 ggsave(paste0(args$output_dir,args$file_prefix,"PC_gene_plots.pdf"), width=8.5, height=11, units = "in", pca_plots)
 
 
-### Clustering Optimization ###
+### Clustering Optimization ### [optional]
 
 # This section is optional to generate a set of plots for clustering optimization
 
 if(clustree)
 {
+
 # Generating clustree and silhouette plots using batch integrated object
 res<-seq(0.1,1.2,by=0.1)
 pc<-c(15,20,25,30,35,40,50)
@@ -576,15 +583,15 @@ print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="integrated
 }
 # Clustree geneplots for RNA assay
 
-# Run PCA on RNA assay first
-DefaultAssay(obj.integrated)<='RNA'
-obj.integrated<-FindVariableFeatures(obj.integrated,nfeatures=args$hvg)
-all.features<-rownames(obj.integrated)
-obj.integrated<-ScaleData(obj.integrated,features=all.features, verbose=args$verbose)
+# Run PCA on RNA assay
+if(args$verbose)
+{cat('Running PCA on normalized data for clustree \n')}
 
-# Run PCA
+DefaultAssay(obj.integrated_clustree)<-'RNA'
+obj.integrated_clustree<-FindVariableFeatures(obj.integrated_clustree,nfeatures=args$hvg)
+all.features<-rownames(obj.integrated_clustree)
+obj.integrated_clustree<-ScaleData(obj.integrated_clustree,features=all.features, verbose=args$verbose)
 
-obj.integrated<-RunPCA(obj.integrated, npcs=50,ndims.print = 1:15, verbose=args$verbose)
 
 # Run clustree geneplot
 
@@ -592,7 +599,8 @@ res<-seq(0.1,1.2,by=0.1)
 pc<-c(15,20,25,30,35,40,50)
 for(i in 1:length(pc))
 {
- obj_clustree<-iterative_clus_by_res(obj.integrated, res=res,dims_use=1:pc[i],verbose=args$verbose,assay='RNA')
+ obj_clustree<-iterative_clus_by_res(obj.integrated_clustree, res=res,dims_use=1:pc[i],verbose=args$verbose,assay='RNA')
+
 print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="RNA_snn_res.",assay='RNA' , fun_use='median',out_dir= args$output_dir, file_prefix=clus_run, verbose=FALSE)
 
 }
@@ -628,6 +636,8 @@ rm(sil_run)
 rm(obj_sil)
 
 }
+
+
 
 ### CLUSTERING ###
 

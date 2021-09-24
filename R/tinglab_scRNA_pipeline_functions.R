@@ -378,22 +378,30 @@ get_var_genes<-function(s.obj,out_dir='./',verbose=FALSE)
 # merged.title - project name of the integrated object
 # genes - Specify the genes to be integrated (if not specified, only sample anchors included in the final expression matrix of the integrated object). Other options are: 'all'  to integrate all genes or a number to specify the number of top variable genes to include (the specified number of variable genes are calculated on merged obj)
 
-cca_batch_correction<-function(s.obj.list,project.name,genes='',verbose=FALSE)
+cca_batch_correction<-function(s.obj.list,project.name,anchors=2000,int.genes='',verbose=FALSE)
 {
   if(verbose){
     cat("Performing CCA-MNN Pipeline",sep='\n')
   }
+
 # Extract the normalization method [assuming all objects have same normalization method]
 norm<-s.obj.list[[1]]@commands$NormalizeData.RNA@params$normalization.method
+
 #Determine min number of neighbors
  mink<-min(200, min(sapply(seq_along(s.obj.list),function(x) ncol(s.obj.list[[x]]) ))  )
+ 
+# Select features
+features<-SelectIntegrationFeatures(obj.list,nfeatures=anchors)
 
- sample.anchors<-FindIntegrationAnchors(s.obj.list,dims = 1:30,k.filter=mink,reduction='cca',scale=FALSE,normalization.method=norm)
- if(genes=='')
+# Find Integration anchors
+sample.anchors<-FindIntegrationAnchors(s.obj.list,dims = 1:30,k.filter=mink,reduction='cca',anchor.features=features,scale=FALSE,normalization.method=norm)
+
+# Integrate with specified number of genes
+ if(int.genes=='')
 {if(verbose)
-    {cat("Integration the sample.anchors only",sep='\n')}
+    {cat("Integrating the sample.anchors only",sep='\n')}
  s.obj.integrated<-IntegrateData(anchorset=sample.anchors, dims=1:30,normalization.method=norm)
-}else if(genes=='all')
+}else if(int.genes=='all')
    {
     all.genes <- lapply(s.obj.list, row.names) %>% Reduce(intersect, .)
     
@@ -402,17 +410,7 @@ norm<-s.obj.list[[1]]@commands$NormalizeData.RNA@params$normalization.method
         cat("Total genes being used for integration = ", length(all.genes),'\n')
        }
     s.obj.integrated<-IntegrateData(anchorset=sample.anchors, dims=1:30,features.to.integrate=all.genes,normalization.method=norm)
-   }else{
-      if(verbose)
-       {cat("CCA_MNN batch correction - integrating top ", genes, " variable genes", sep='\n')}
-      m.obj<-merge(s.obj.list[[1]],s.obj.list[2:length(s.obj.list)])
-      m.obj<-FindVariableFeatures(m.obj, nfeatures=genes)
-      
-      int.genes<- m.obj@assays$RNA@var.features
-      #int.genes<-union(sample.anchors,m.obj@assays$RNA@var.features)
-      s.obj.integrated<-IntegrateData(anchorset=sample.anchors, dims=1:30,features.to.integrate=int.genes,normalization.method=norm)
-    rm(m.obj)
-    }
+   }
 
 rm(sample.anchors)
 
