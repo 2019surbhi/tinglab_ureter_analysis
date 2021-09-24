@@ -599,6 +599,8 @@ print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="integrated
 if(args$verbose)
 {cat('Running PCA on normalized data for clustree \n')}
 
+obj.integrated_clustree<-obj.integrated
+
 DefaultAssay(obj.integrated_clustree)<-'RNA'
 obj.integrated_clustree<-FindVariableFeatures(obj.integrated_clustree,nfeatures=args$hvg)
 all.features<-rownames(obj.integrated_clustree)
@@ -621,6 +623,7 @@ rm(res)
 rm(pc)
 rm(clus_run)
 rm(obj_clustree)
+rm(obj.integrated_clustree)
 
 }
 
