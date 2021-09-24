@@ -394,7 +394,7 @@ norm<-s.obj.list[[1]]@commands$NormalizeData.RNA@params$normalization.method
 features<-SelectIntegrationFeatures(obj.list,nfeatures=anchors)
 
 # Find Integration anchors
-sample.anchors<-FindIntegrationAnchors(s.obj.list,dims = 1:30,k.filter=mink,reduction='cca',anchor.features=features,scale=FALSE,normalization.method=norm)
+sample.anchors<-FindIntegrationAnchors(s.obj.list,dims = 1:30,k.filter=mink,reduction='cca',anchor.features=features,normalization.method=norm)
 
 # Integrate with specified number of genes
  if(int.genes=='')
@@ -733,5 +733,5 @@ get_silhouette_plot<-function(s.obj,reduction='pca',dims=1:50,out_dir='./',file_
   
   #Printing the Silhouette plot
   fviz_silhouette(sil)
-  ggsave(paste0(file_prefix,"_silhouette.png"),path=out_path, width=33,height=10)
+  ggsave(filename=paste0(file_prefix,"_silhouette.png"),path=out_path, width=33,height=10)
 }
