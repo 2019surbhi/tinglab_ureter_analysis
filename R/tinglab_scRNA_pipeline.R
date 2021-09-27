@@ -48,7 +48,7 @@ parser<-add_argument(
   short='-l',
   type="character",
   default='all',
-  help="Enter which clusters (separated by ,) to be used for subset analysis. Use this argument only when performing subset analysis")
+  help="Enter which clusters (separated by ,) to be used for subset analysis. Use this argument only when performing subset analysis to specify which clusters to use to subset the specified Seurat obj")
 
 parser<-add_argument(
   parser,
@@ -112,21 +112,21 @@ parser<-add_argument(
   short='-g',
   default='',
   type='character',
-  help="Enter number of genes to integrate: Leave blank to integrate sample.anchors, enter 'all' to integrate all genes, or a numeric value to  enter the number of genes to integrate - the top variable genes calculated on merged object will be used for integration for this last option")
+  help="Enter number of genes to integrate: Leave blank to integrate sample.anchors, enter 'all' to integrate all genes, or a numeric value to  enter the number of genes to integrate (should be same as number of variable genes computed) ")
 
 parser<-add_argument(
  parser,
  arg='--qc_only',
  short='-Q',
  flag=TRUE,
- help="Set flag if you wish to run only QC")
+ help="Set flag to run only QC")
 
 parser<-add_argument(
  parser,
  arg='--qc_plots',
  short='-q',
  flag=TRUE,
- help="Set flag if you wish to generate qc plots (pre and post filtering)")
+ help="Set flag to generate qc plots (pre and post filtering)")
 
 parser<-add_argument(
   parser,
@@ -185,53 +185,68 @@ cat('\n')
 ### Process arguments ###
 
 # Prepare output directory
-if(! dir.exists(args$output_dir) ){
+if(! dir.exists(args$output_dir))
+{
   dir.create(args$output_dir)
 }
 
 #Save run parameters - find better ways to save this in txt format
-write.table(args,paste0(args$output_dir,"run_parameters.txt"),sep='\t',col.names=FALSE)
+user_input<-unlist(args)
+names(user_input)<-NULL
+args_tab<-cbind(names(args),user_input)
+colnames(args_tab)<-c('arguments','user_input')
+write.csv(args_tab,paste0(args$output_dir,args$file_prefix,"run_parameters.csv"))
 
 # Add separator to file name
-if(args$file_prefix!=''){
+if(args$file_prefix!='')
+{
   args$file_prefix<- gsub(' ','_',args$file_prefix)
  }
+
 args$file_prefix<-paste0(args$file_prefix,'_')
 
-#Process thresholds
+#Process cell filtering thresholds
   if(args$thresholds!='')
    {
     args$thresholds= as.numeric(unlist(strsplit(args$thresholds,split = ',',fixed = TRUE)))
    }
 
 #Process PCA components
-if(args$pca_dimensions==''){
+
+if(args$pca_dimensions=='')
+{# If user didn't choose PCs then use all 50 PCs
   args$pca_dimensions<- c(1:50)
-}else{
-  dim.range<- as.numeric(unlist(strsplit(args$pca_dimensions,split = ':',fixed = TRUE)))
- if(length(dim.range)>1) 
+}else
+  {
+   # Create a vector of user specified PCs
+   dim.range<- as.numeric(unlist(strsplit(args$pca_dimensions,split = ':',fixed = TRUE)))
+   if(length(dim.range)>1)
     {
+     # Create PCs vector if user specified range of PCs (e.g. 1:15)
      args$pca_dimensions=as.numeric(dim.range[1]):as.numeric(dim.range[2])
     }else
-     {
-      args$pca_dimensions<-as.numeric(unlist(strsplit(args$pca_dimensions, split=',', fixed=TRUE)))
-     }  
-}
+      {
+       # Create PCs vector if user entered specific sets of PCs (e.g. 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)
+       args$pca_dimensions<-as.numeric(unlist(strsplit(args$pca_dimensions, split=',', fixed=TRUE)))
+      }
+  }
 
 # Process resolution
 args$cluster_resolution<-as.numeric(args$cluster_resolution)
 
 # Process batch genes arguments
 if(args$batch_genes!='')
-  {if(args$batch_genes!='all')
-	{args$batch_genes<-as.numeric(args$batch_genes)}
+  {
+   if(args$batch_genes!='all')
+	{
+     args$batch_genes<-as.numeric(args$batch_genes)
+    }
   }
 
 # Process cluster numbers
 if(args$clusters!='all')
 {
-args$clusters=as.numeric(unlist(strsplit(args$clusters,split = ',',fixed = TRUE)))
-
+ args$clusters=as.numeric(unlist(strsplit(args$clusters,split = ',',fixed = TRUE)))
 }
 
 # Process clustering optimization arguments
@@ -252,8 +267,9 @@ cat('\n')
 saveRDS(args,paste0(args$output_dir,args$file_prefix,"arguments.rds"))
 
 
-#Facilitate parallel processing
+###(1) Load data or prepare subset analysis data ###
 
+#Facilitate parallel processing
 plan("multicore", workers=args$cores)
 options(future.globals.maxSize=((args$mem*1000)*1024^2))
 options(future.rng.onMisue = "ignore")
@@ -263,103 +279,112 @@ setwd(args$output_dir)
 
 obj.list<-list()
 
-#Load object from object_list (if added)
+# [if-else block 1]: If no object specified, then the script looks for expression matrix in the input directory
 if(args$object=='')
 {
+ # Determine if the samples are to be loaded from single or multiple directories
+ paths.list<-unlist(strsplit(args$input_dir,split=':'))
+  
+  ## [if-else block 1a]: If multiple paths are specified by the user
+  if(length(paths.list)>1)
+   {
+    if(args$verbose)
+      {cat("Loading data from multiple datasets/paths" ,'\n')}
 
-# Determine if the samples are to be loaded from single or multiple directories
-
-paths.list<-unlist(strsplit(args$input_dir,split=':'))
-
-if(length(paths.list)>1)
-{
- if(args$verbose)
-  {cat("Loading data from multiple datasets/paths" ,'\n')}
-
- s.list<-list()
-
-if(args$samples=='all')
- {if(args$verbose)
-  {cat('You did not enter any samples, Running pipeline on all samples from the specified input directories',sep='\n')}
-   s<-lapply(paths.list,list.files)
-   }else{
-      #Create a list of samples corresponding to each path
-      s<-strsplit(args$samples,split=':') %>% unlist %>% lapply(FUN=function(x) {strsplit(x,split=',') %>%  unlist})
-         }
-# Create a list of seurat object
-for(i in 1:length(paths.list))
- {
-  n<-length(s[[i]])
-
-   s.list[[i]]<-lapply(s[[i]][1:n], create_seurat_obj_10X,input_dir=paths.list[i],args$data_dir,verbose=args$verbose)
-
-  }
-
-obj.list<-unlist(s.list)
-rm(s.list)
-rm(s)
-
-}else{
-  # Extract samples list
-   if(args$verbose)
-  {cat('Loading data from single path', '\n')}
-   if(args$samples=='all')
+    s.list<-list()
+       
+    ### [if-else block 1b]: If user didn't specify sample names, all samples from input directory will be loaded
+    if(args$samples=='all')
      {if(args$verbose)
-       {cat('you did not enter any samples, Running pipeline on all samples in the input directory',sep='\n')}
-      args$samples<-list.files(args$input_dir)
-     }else{
+        {cat('You did not enter any samples, Running pipeline on all samples from the specified input directories',sep='\n')}
+      s<-lapply(paths.list,list.files)
+     }else ### [if-else block 1b]: If user specified sample names
+       {
+        # Create a list of samples corresponding to each path
+        s<-strsplit(args$samples,split=':') %>% unlist %>% lapply(FUN=function(x) {strsplit(x,split=',') %>%  unlist})
+       }
+       
+    # Now Create a list of seurat object [all samples or user specified samples]
+    for(i in 1:length(paths.list))
+    {
+     n<-length(s[[i]])
+
+     s.list[[i]]<-lapply(s[[i]][1:n], create_seurat_obj_10X,input_dir=paths.list[i],args$data_dir,verbose=args$verbose)
+    }
+
+   obj.list<-unlist(s.list)
+   rm(s.list)
+   rm(s)
+
+  }else ## [if-else block 1a]: If single path specified
+    {
+     # Extract samples list
+     if(args$verbose)
+        {cat('Loading data from single path', '\n')}
+    
+     ### [if-else block 1c]: If user didn't specify sample names, all samples from single input directory will be loaded
+     if(args$samples=='all')
+        {
+         if(args$verbose)
+          {cat('you did not enter any samples, Running pipeline on all samples in the input directory',sep='\n')}
+         args$samples<-list.files(args$input_dir)
+        }else ### [if-else block 1c]: User specified samples from single input directory will be loaded
+          {
            args$samples<-unlist(strsplit(args$samples,split = ',',fixed = TRUE))
           }
-  n<-length(args$samples)
-  #Create Seurat object from single directory
-   obj.list<-lapply(args$samples[1:n], create_seurat_obj_10X,input_dir=args$input_dir,args$data_dir,verbose=args$verbose)
+     
+    n<-length(args$samples)
+    #Create Seurat object from single directory
+    obj.list<-lapply(args$samples[1:n],create_seurat_obj_10X,input_dir=args$input_dir,args$data_dir,verbose=args$verbose)
+    }
+    
+}else # [if-else block 1]: If object is specified then run subset analysis
+  {
+   if(args$verbose)
+     {cat("Begin sub-clustering",'\n')}
+   
+   #Load Seurat object (containing all samples)
+   obj<-readRDS(args$object)
 
- }
-}else{
-  if(args$verbose)
-{cat("Begin sub-clustering",'\n')}
-
-#Load Seurat object (containing all samples)
-obj<-readRDS(args$object)
-
-if(args$clusters=='all')
-{sub<-obj}else{
-		#Subset Seurat object to include only specific clusters defined by user
+   if(args$clusters=='all') ## [if-else block 1d]: if clusters='all' then no subsetting is done (useful for running analysis on manually merged obj)
+      {
+          sub<-obj
+      }else ## [if-else block 1d]: Subset Seurat object to include only specific clusters defined by user
+        {
 		sub<-subset(obj,idents=args$clusters)
 	 	}
 
-sub.list<-list()
-sub.counts<-list()
+   sub.list<-list()
+   sub.counts<-list()
 
-#Split the subsetted object by sample
-if(args$verbose)
-{ cat("Splitting object by sample ID",'\n')}
+   #Split the subsetted object by sample
+   if(args$verbose)
+    { cat("Splitting object by sample ID",'\n')}
+   sub.list<-SplitObject(sub, split.by = "orig.ident")
+   sample.id<-names(sub.list)
 
-sub.list<-SplitObject(sub, split.by = "orig.ident")
-sample.id<-names(sub.list)
+   #Extract counts data
+   sub.counts<-lapply(X=1:length(sub.list), function(x) {return(sub.list[[x]]@assays$RNA@counts)})
 
-#Extract counts data
-sub.counts<-lapply(X=1:length(sub.list), function(x) {return(sub.list[[x]]@assays$RNA@counts)})
+   #Create Seurat object
+   obj.list<-mapply(create_seurat_obj_from_counts_data,sub.counts,sample.id,verbose=args$verbose)
 
-#Create Seurat object
-obj.list<-mapply(create_seurat_obj_from_counts_data,sub.counts,sample.id,verbose=args$verbose)
+   rm(sub)
+   rm(sub.list)
+   rm(sub.counts)
+   rm(sample.id)
+  }
 
-rm(sub)
-rm(sub.list)
-rm(sub.counts)
-rm(sample.id)
+###(2) QC ###
 
-}
-
-## QC ##
-
+##(2a) Generate raw count qc plots ## (optional)
 if(args$qc_plots)
 {
 
 #Get pre-filter histogram [sample-wise + aggregate]
 if(!dir.exists(paste0(args$output_dir,'qc_plot/histograms/raw')))
         {dir.create(file.path("qc_plots","histograms","raw"), recursive = TRUE)}
-    out_path<-paste0(args$output_dir,'qc_plots/histograms/raw/')
+out_path<-paste0(args$output_dir,'qc_plots/histograms/raw/')
 
 x_lab<-c('LibrarySize','GeneCounts','MtPerc')
 x_lim<-c(50000,2000,50)
@@ -394,82 +419,85 @@ rm(x_lim)
 
 }
 
+
+##(2b) If user specified, thresholds, calculate post filtering metrics ##
 if(length(args$thresholds)>1)
 {
-# Get cell table
-tab_list<-lapply(obj.list[1:length(obj.list)],get_cell_table,mt.thres=args$thresholds[1], genecnt.thres=args$thresholds[2:3], libsize.thres=args$thresholds[4:5], verbose=args$verbose)
-tab<-data.frame()
-for(i in 1:length(tab_list))
-{
-tab<-rbind(tab,tab_list[[i]])
-}
+ # Get cell table
+ tab_list<-lapply(obj.list[1:length(obj.list)],get_cell_table,mt.thres=args$thresholds[1], genecnt.thres=args$thresholds[2:3], libsize.thres=args$thresholds[4:5], verbose=args$verbose)
+ tab<-data.frame()
+ for(i in 1:length(tab_list))
+  {
+   tab<-rbind(tab,tab_list[[i]])
+  }
 
-total<-colSums(tab)
-tab<-rbind(tab,"Total"=total)
+ total<-colSums(tab)
+ tab<-rbind(tab,"Total"=total)
 
-write.csv(tab,paste0(args$output_dir,args$file_prefix,"cell_qc_table.csv"))
-rm(tab_list)
-rm(tab)
+ write.csv(tab,paste0(args$output_dir,args$file_prefix,"cell_qc_table.csv"))
+ rm(tab_list)
+ rm(tab)
 
-# Filter low quality cells
-obj_tab_list<-lapply(X=(1:length(obj.list)), FUN=function(x){filter_cells(obj.list[[x]],mt.thres=args$thresholds[1], genecnt.thres=args$thresholds[2:3], libsize.thres=args$thresholds[4:5], verbose=args$verbose)})
+ # Filter low quality cells [only to compute post filter values, actual filtering not performed at this point]
+ obj_tab_list<-lapply(X=(1:length(obj.list)), FUN=function(x){filter_cells(obj.list[[x]],mt.thres=args$thresholds[1], genecnt.thres=args$thresholds[2:3], libsize.thres=args$thresholds[4:5], verbose=args$verbose)})
 
-obj.list<-do.call(c,(lapply(obj_tab_list,`[[`,1)))
-cell.data<-do.call(rbind,(lapply(obj_tab_list, `[[`, 2)))
-cell.data2<-adorn_totals(cell.data,"col")
+ obj.list<-do.call(c,(lapply(obj_tab_list,`[[`,1)))
+ cell.data<-do.call(rbind,(lapply(obj_tab_list, `[[`, 2)))
+ cell.data2<-adorn_totals(cell.data,"col")
 
-write.csv(cell.data2,paste0(args$output_dir,args$file_prefix,"cell_threhold_table.csv"))
+ write.csv(cell.data2,paste0(args$output_dir,args$file_prefix,"cell_threhold_table.csv"))
 
-rm(obj_tab_list)
-#cell.data<-do.call(c,lapply(cell_tab_list))
+ rm(obj_tab_list)
+ #cell.data<-do.call(c,lapply(cell_tab_list))
 
-# Get threhold plots
-cell.data$rank[order(cell.data$thr.cell.cnt,decreasing = TRUE)]<- c(1:nrow(cell.data))
-if(args$verbose){
+ # Get threhold plots
+ cell.data$rank[order(cell.data$thr.cell.cnt,decreasing = TRUE)]<- c(1:nrow(cell.data))
+ if(args$verbose){
     cat("Exporting cell count plots",sep='\n')}
-threshold_plots<-plot_threshold_effects(cell.data,args$thresholds,args$file_prefix)
-pdf(file=paste0(args$output_dir,args$file_prefix,"thresholds.pdf"),paper='a4',width=8)
-lapply(threshold_plots,print)
-dev.off()
+ threshold_plots<-plot_threshold_effects(cell.data,args$thresholds,args$file_prefix)
+ pdf(file=paste0(args$output_dir,args$file_prefix,"thresholds.pdf"),paper='a4',width=8)
+ lapply(threshold_plots,print)
+ dev.off()
 
-rm(threshold_plots)
-rm(cell.data)
+ rm(threshold_plots)
+ rm(cell.data)
 
-if(args$qc_plots)
-{
-# Get post threshold histograms
-if(!dir.exists(paste0(args$output_dir,'qc_plot/histograms/post_filter')))
+ ## Get post filtering plots ## (optional)
+ if(args$qc_plots)
+ {
+  # Get post threshold histograms
+  if(!dir.exists(paste0(args$output_dir,'qc_plot/histograms/post_filter')))
         {dir.create(file.path("qc_plots","histograms","post_filter"), recursive = TRUE)}
-    out_path<-paste0(args$output_dir,'qc_plots/histograms/post_filter/')
+  out_path<-paste0(args$output_dir,'qc_plots/histograms/post_filter/')
 
-x_lab<-c('LibrarySize','GeneCounts','MtPerc')
-x_lim<-c(50000,2000,50)
+  x_lab<-c('LibrarySize','GeneCounts','MtPerc')
+  x_lim<-c(50000,2000,50)
 
-for(i in 1:length(x_lab))
-{
- pre<-paste0(args$file_prefix,'post-filter_Histogram_')
- # Get Histogram for each sample
- hist_list<-lapply(obj.list,get_histogram,out_path,prefix=pre,x_lab[i])
+  for(i in 1:length(x_lab))
+  {
+   pre<-paste0(args$file_prefix,'post-filter_Histogram_')
+   # Get Histogram for each sample
+   hist_list<-lapply(obj.list,get_histogram,out_path,prefix=pre,x_lab[i])
 
- #Get aggregate Histogram
- lab<-paste0(args$file_prefix,'post-filter_AggregateHistogram')
- agg<-unlist(hist_list)
- print_histogram_abline(agg,out_path,label=lab,x_lab[i])
+   #Get aggregate Histogram
+   lab<-paste0(args$file_prefix,'post-filter_AggregateHistogram')
+   agg<-unlist(hist_list)
+   print_histogram_abline(agg,out_path,label=lab,x_lab[i])
 
- #Get aggregate Histogram low xlim
- lab<-paste0(args$file_prefix,'post-filter_AggregateHistogram_low')
- print_histogram_abline(agg,out_path,label=lab,x_lab[i],x=c(0,x_lim[i]))
+   #Get aggregate Histogram low xlim
+   lab<-paste0(args$file_prefix,'post-filter_AggregateHistogram_low')
+   print_histogram_abline(agg,out_path,label=lab,x_lab[i],x=c(0,x_lim[i]))
 
-}
+   }
 
-rm(hist_list)
-rm(pre)
-rm(lab)
-rm(agg)
-rm(x_lab)
-rm(x_lim)
+  rm(hist_list)
+  rm(pre)
+  rm(lab)
+  rm(agg)
+  rm(x_lab)
+  rm(x_lim)
 
-}
+  }
 }
 
 # End script here if user specified only qc outputs
@@ -479,7 +507,7 @@ if(args$qc_only)
     quit(save='no')
 }
 
-### Data pre-processing ###
+###(3) Data pre-processing ###
 
 if(args$verbose)
 {cat('Following ', length(obj.list), ' samples will be integrated: \n')
@@ -490,9 +518,8 @@ obj.list<-lapply(obj.list[1:length(obj.list)],pre_process, hvg=args$hvg, verbose
 
 #Get variable genes table and plots for each sample
 # Prepare output file
-  if(!dir.exists(paste0(args$output_dir,'variable_genes/'))){
-    dir.create( paste0(args$output_dir,'variable_genes/'))
-  }
+if(!dir.exists(paste0(args$output_dir,'variable_genes/')))
+  {dir.create( paste0(args$output_dir,'variable_genes/'))}
 out_path<-paste0(args$output_dir,'variable_genes/')
 lapply(obj.list[1:length(obj.list)],get_var_genes,out_dir=out_path,verbose=args$vebose)
 
@@ -506,7 +533,7 @@ rm(varplots)
 
 cat('Obj list size: ', length(obj.list), '\n')
 
-## Batch correction and integration ##
+###(4) Batch correction and integration ###
 
 if(length(obj.list)>1)
  {
@@ -514,11 +541,12 @@ if(length(obj.list)>1)
  
 obj.integrated<-cca_batch_correction(obj.list,project.name=args$file_prefix, anchors=args$hvg, int.genes=args$batch_genes, verbose=args$verbose)
 
-}else{
+}else # This allows skipping batch correction in case user wants to run the rest of the pipeline on an already batch corrected object (most likely batch corrected by another method)
+ {
    obj.integrated=obj.list[[1]]
-   }
+ }
 
-### Add meta data ###
+###(5) Add meta data ### (optional)
 
 if(args$verbose)
 {cat('Adding metdata \n')}
@@ -534,20 +562,22 @@ obj.integrated<-add_metadata(obj.integrated,args$meta_file)
 
 rm(obj.list)
 
+### Save batch corrected obj ### (optional)
 if((args$save=='integrated')||(args$save=='both'))
  {
   #Saving object pre-clustering for clustering optimization (if needed)   
   saveRDS(obj.integrated,file=paste0(args$output_dir,args$file_prefix,"integrated_only.rds"))
  }
 
-### Pre-clustering processing ###
+###(6) Pre-clustering processing ###
 
 if(clustree)
 {
- #Save a copy of obj before running PCA to generate clustree geneplots on RNA assay
-obj.integrated_RNA<-obj.integrated
+ #Save a copy of obj before running PCA to generate clustree geneplots on RNA assay (optional)
+ obj.integrated_RNA<-obj.integrated
 }
 
+##(6a) Run PCA ##
 DefaultAssay(obj.integrated)<-'integrated'
 
 # Scale data
@@ -557,11 +587,10 @@ if(args$verbose)
   obj.integrated<-ScaleData(obj.integrated,features=all.features, verbose=args$verbose)
  
 # Run PCA
+obj.integrated<-RunPCA(obj.integrated, npcs=50,ndims.print = 1:15, verbose=args$verbose)
 
-  obj.integrated<-RunPCA(obj.integrated, npcs=50,ndims.print = 1:15, verbose=args$verbose)
 
-
-### PCA Plots ###
+##(6b) PCA Plots ##
 
 # Elbow Plot
 
@@ -571,25 +600,21 @@ png(file=paste0(args$output_dir,args$file_prefix,"PCA_elbow_plots.png"),width = 
   dev.off()
 
 # PCA gene plot (print 4 PCs per page)
-
-  pc_genes_plot_list<-lapply(args$pca_dimensions,function(x){ VizDimLoadings(obj.integrated,dims=x,ncol=1,reduction='pca') })
+pc_genes_plot_list<-lapply(args$pca_dimensions,function(x){ VizDimLoadings(obj.integrated,dims=x,ncol=1,reduction='pca') })
 
 pca_plots<-marrangeGrob(pc_genes_plot_list, nrow=2, ncol=2)
 ggsave(paste0(args$output_dir,args$file_prefix,"PC_gene_plots.pdf"), width=8.5, height=11, units = "in", pca_plots)
 
 
-### Clustering Optimization ### [optional]
+###(7) Clustering Optimization ### (optional)
 
-# This section is optional to generate a set of plots for clustering optimization
-
+##(7a) Generating clustree plots ## (optional)
 if(clustree)
 {
 
 if(args$verbose)
 {cat('Running clustree \n')}
 
-
-# Generating clustree and silhouette plots using batch integrated object
 res<-seq(0.1,1.2,by=0.1)
 pc<-c(15,20,25,30,35,40,50)
 
@@ -601,11 +626,12 @@ clus_run=paste0(args$file_prefix,'PC',pc[i])
 obj_clustree<-iterative_clus_by_res(obj.integrated, res=res,dims_use=1:pc[i],verbose=args$verbose)
 print_clustree_png(obj_clustree,prefix="integrated_snn_res.",out_dir=args$output_dir,file_prefix=clus_run,verbose=args$verbose)
 
+# Generate clustree geneplots on integrated assay
 print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="integrated_snn_res.",assay='integrated' , fun_use='median',out_dir= args$output_dir, file_prefix=clus_run, verbose=FALSE)
 }
 
 
-# Generate clustree geneplots on RNA assay
+# Generate clustree geneplots on RNA assay using a copy of batch corrected object
 DefaultAssay(obj.integrated_RNA)<-'RNA'
 
 all.genes<-rownames(obj.integrated_RNA)
@@ -630,6 +656,8 @@ rm(obj.integrated_RNA)
 
 }
 
+
+##(7b) Generate silhouette plots ## (optional)
 if(sil)
 {
 
@@ -660,10 +688,9 @@ rm(obj_sil)
 }
 
 
-### CLUSTERING ###
+###(8) CLUSTERING ###
 
-# In the pipeline the clusters are generated by default using 50 PCs at resolution 0.5
-
+# In the pipeline the clusters are generated by default using 50 PCs at resolution 0.5. These parameters can be modified by the user
 DefaultAssay(obj.integrated)<-'integrated'
 
 if(args$verbose)
@@ -694,9 +721,7 @@ if(args$meta_file!='')
  customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='normal_tumor',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
 }
  
-### Export seurat objects ###
-
-# obj.integrated is an object with normalized batch corrected counts and allows clustering with optimal parameters while obj.clustered contains clustering info and can be used for further downstream analyses
+## Save clustered seurat objects ##
 
 if((args$save=='final')||(args$save=='both'))
 {
@@ -707,8 +732,9 @@ if((args$save=='final')||(args$save=='both'))
  saveRDS(obj.integrated,file=paste0(args$output_dir,args$file_prefix,"clustered.rds"))
 }
 
-### Cell proportion table ###
+###(9) Post-clustering downstream analysis ###
 
+##(9a) Cell proportion table ##
 tab<-table(Idents(obj.integrated),obj.integrated@meta.data$orig.ident)
 
 #Convert to data frame
@@ -717,18 +743,17 @@ tab<-cbind(rownames(tab),tab)
 colnames(tab)[1]<-'cluster'
 
 #Add totals
-
 tab2<-adorn_totals(tab, c("row","col"))
-
 write.csv (tab2,paste0(args$output_dir,args$file_prefix,"cells_by_cluster_by_sample.csv"),row.names = FALSE)
 
-### Differential gene expression ###
+
+##(9b) Differential gene expression ##
 
 clusters_num<-levels(obj.integrated$seurat_clusters)
 DefaultAssay(s.obj)<-"RNA"
 marker.list<-differential_gene_exp(obj.integrated, clusters=clusters_num, out_dir=args$output_dir,file_tag=args$file_prefix,verbose=args$verbose)
 
-### Feature Plots ###
+##(9c) Feature Plots ##
 
 if(!dir.exists(paste0(args$output_dir,'feature_plots/')))
         {dir.create( paste0(args$output_dir,'feature_plots/'))}
@@ -744,7 +769,6 @@ for(i in 1:length(marker.list))
 }
 
 # Generating pdf Plots
-
 if(args$verbose)
         {cat("Creating Feature plots (pdf format)", sep='\n')}
 
@@ -781,7 +805,7 @@ rm(p1)
 rm(p2)
 rm(out)
 
-### Heatmaps ###
+##(9d) Heatmaps ##
 
 # Generating heatmap for top 15 markers per cluster
 
@@ -812,15 +836,15 @@ ggsave(paste0(args$file_prefix,"Heatmap_RNA.pdf"),path=args$output_dir,width=22,
 
 rm(h2)
 
-### Plot Dendrogram ###
+##(9e) Dendrogram ###
 
 plot_dendrogram(obj.integrated,args$file_prefix,features=heatmap_features,out_dir=args$output_dir)
 
 rm(heatmap_features)
 rm(obj.integrated)
 
+# Print session info
 sessionInfo()
-
 cat('\n')
 
 cat('End of script ','\n')
