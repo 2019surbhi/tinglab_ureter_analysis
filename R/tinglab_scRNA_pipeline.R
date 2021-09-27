@@ -218,6 +218,9 @@ if(args$pca_dimensions==''){
      }  
 }
 
+# Process resolution
+args$cluster_resolution<-as.numeric(args$cluster_resolution)
+
 # Process batch genes arguments
 if(args$batch_genes!='')
   {if(args$batch_genes!='all')
@@ -236,7 +239,6 @@ args$clustering_optimization<-unlist(strsplit(args$clustering_optimization, spli
 
 clustree<-ifelse('clustree' %in% args$clustering_optimization,TRUE,FALSE)
 sil<-ifelse('sil' %in% args$clustering_optimization,TRUE,FALSE)
-#ikap<-ifelse('ikap' %in% args$clustering_optimization,TRUE,FALSE)
 
 #Generate a list of genes for clustree from input
 args$gene_list<-unlist(strsplit(args$gene_list,split=','))
@@ -504,6 +506,8 @@ rm(varplots)
 
 cat('Obj list size: ', length(obj.list), '\n')
 
+## Batch correction and integration ##
+
 if(length(obj.list)>1)
  {
  # Integrate data with batch correction
@@ -537,6 +541,12 @@ if((args$save=='integrated')||(args$save=='both'))
  }
 
 ### Pre-clustering processing ###
+
+if(clustree)
+{
+ #Save a copy of obj before running PCA to generate clustree geneplots on RNA assay
+obj.integrated_RNA<-obj.integrated
+}
 
 DefaultAssay(obj.integrated)<-'integrated'
 
@@ -593,37 +603,30 @@ print_clustree_png(obj_clustree,prefix="integrated_snn_res.",out_dir=args$output
 
 print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="integrated_snn_res.",assay='integrated' , fun_use='median',out_dir= args$output_dir, file_prefix=clus_run, verbose=FALSE)
 }
-# Clustree geneplots for RNA assay
-
-# Run PCA on RNA assay
-if(args$verbose)
-{cat('Running PCA on normalized data for clustree \n')}
-
-obj.integrated_clustree<-obj.integrated
-
-DefaultAssay(obj.integrated_clustree)<-'RNA'
-obj.integrated_clustree<-FindVariableFeatures(obj.integrated_clustree,nfeatures=args$hvg)
-all.features<-rownames(obj.integrated_clustree)
-obj.integrated_clustree<-ScaleData(obj.integrated_clustree,features=all.features, verbose=args$verbose)
 
 
-# Run clustree geneplot
+# Generate clustree geneplots on RNA assay
+DefaultAssay(obj.integrated_RNA)<-'RNA'
 
-res<-seq(0.1,1.2,by=0.1)
-pc<-c(15,20,25,30,35,40,50)
+all.genes<-rownames(obj.integrated_RNA)
+obj.integrated_RNA<-ScaleData(obj.integrated_RNA,features=all.genes)
+
+var_genes<-obj.integrated_RNA@assay$integrated@var.features
+obj.integrated_RNA<-RunPCA(obj.integrated_RNA,assay='RNA',features=var_genes)
+
 for(i in 1:length(pc))
 {
- obj_clustree<-iterative_clus_by_res(obj.integrated_clustree, res=res,dims_use=1:pc[i],verbose=args$verbose,assay='RNA')
+obj_clustree<-NULL
+clus_run=paste0(args$file_prefix,'PC',pc[i])
+obj_clustree<-iterative_clus_by_res(obj.integrated_RNA, res=res,dims_use=1:pc[i],verbose=args$verbose)
 
-print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="RNA_snn_res.",assay='RNA' , fun_use='median',out_dir= args$output_dir, file_prefix=clus_run, verbose=FALSE)
+print_geneplots_on_clustree_RNA(obj_clustree,genes=args$gene_list, fun_use='median',prefix='RNA_snn_res.', out_dir=argv$output_dir,run_tag=clus_run, verbose=FALSE)
 
 }
 
-rm(res)
-rm(pc)
 rm(clus_run)
 rm(obj_clustree)
-rm(obj.integrated_clustree)
+rm(obj.integrated_RNA)
 
 }
 
@@ -668,7 +671,7 @@ if(args$verbose)
 
 #Find Clusters
   obj.integrated<-FindNeighbors(obj.integrated, dims=args$pca_dimensions)
-  obj.integrated<-FindClusters(obj.integrated, res=as.numeric(args$cluster_resolution))
+  obj.integrated<-FindClusters(obj.integrated, res=args$cluster_resolution)
 
 #Generate UMAP
   if(args$verbose)

@@ -1,4 +1,4 @@
-#last edited: 2021_09_20
+   #last edited: 2021_09_20
 
 # scRNA seq Seurat pipeline FUNCTIONS [based on Satija lab's Seurat tool]
 # Developers: Surbhi Sona (TING lab) and Jean Clemenceau
@@ -648,10 +648,11 @@ png(paste0(out_dir,file_tag,"dendrogram.png"),width=11,height = 8.5, units="in",
 # reduction - dimentionality reduction to be used (Default: 'pca')
 # assay - which assay to use (Default: 'integrated')
 
-iterative_clus_by_res<-function(s.obj,res,dims_use,reduction='pca',assay='integrated',verbose=FALSE)
+iterative_clus_by_res<-function(s.obj,res, dims_use,reduction='pca',assay='integrated',verbose=FALSE)
 { if(verbose)
    {cat("Performing iterative clustering by resolution for PCs 1:",max(dims_use),'\n')}
   DefaultAssay(s.obj)<-assay
+
   s.obj<-FindNeighbors(s.obj,dims=dims_use,reduction=reduction)
   for(i in 1:length(res))
   {
@@ -689,7 +690,7 @@ print_clustree_png<-function(s.obj,prefix,out_dir='./',file_prefix,verbose=FALSE
 # out_dir - output directory path to store the plots
 # file_prefix - file prefix name
 
-print_geneplots_on_clustree<-function(s.obj,genes, prefix,assay='integrated', fun_use='median', out_dir, file_prefix, verbose=FALSE)
+print_geneplots_on_clustree<-function(s.obj,genes, prefix='integrated_snn_res.',assay='integrated', fun_use='median', out_dir, file_prefix, verbose=FALSE)
 {
  validated_genes<-genes[which(genes %in% rownames(s.obj)==TRUE)]
  if(length(validated_genes)>0)
@@ -701,6 +702,8 @@ print_geneplots_on_clustree<-function(s.obj,genes, prefix,assay='integrated', fu
  out_path<-paste0(out_dir,'clustree_geneplots/',assay,'/')
  
  DefaultAssay(s.obj)<-assay
+ cat('validated genes: \n')
+ head(validated_genes)
  
  for(i in 1:length(validated_genes))
  {
