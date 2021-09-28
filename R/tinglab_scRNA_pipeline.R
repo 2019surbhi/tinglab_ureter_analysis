@@ -645,20 +645,24 @@ print_geneplots_on_clustree(obj_clustree,genes=args$gene_list,prefix="integrated
 # Generate clustree geneplots on RNA assay using a copy of batch corrected object
 DefaultAssay(obj.integrated_RNA)<-'RNA'
 
+cat('Scaling \n')
+
 all.genes<-rownames(obj.integrated_RNA)
 obj.integrated_RNA<-ScaleData(obj.integrated_RNA,features=all.genes)
+
+cat('Running PCA on RNA assay \n')
 
 var_genes<-obj.integrated_RNA@assays$integrated@var.features
 obj.integrated_RNA<-RunPCA(obj.integrated_RNA,assay='RNA',features=var_genes)
 
+cat('Generating clustree geneplots on RNA assay \n')
 for(i in 1:length(pc))
 {
 obj_clustree<-NULL
 clus_run=paste0(args$file_prefix,'PC',pc[i])
-obj_clustree<-iterative_clus_by_res(obj.integrated_RNA, res=res,dims_use=1:pc[i],verbose=args$verbose)
+obj_clustree<-iterative_clus_by_res(obj.integrated_RNA, res=res,dims_use=1:pc[i],verbose=args$verbose,assay='RNA')
 
-print_geneplots_on_clustree_RNA(obj_clustree,genes=args$gene_list, fun_use='median',prefix='RNA_snn_res.', out_dir=argv$output_dir,run_tag=clus_run, verbose=FALSE)
-
+print_geneplots_on_clustree(obj_clustree,genes=args$gene_list, fun_use='median',assay='RNA',prefix='RNA_snn_res.', out_dir=argv$output_dir,run_tag=clus_run, verbose=FALSE)
 }
 
 rm(clus_run)
@@ -760,7 +764,7 @@ write.csv (tab2,paste0(args$output_dir,args$file_prefix,"cells_by_cluster_by_sam
 ##(9b) Differential gene expression ##
 
 clusters_num<-levels(obj.integrated$seurat_clusters)
-DefaultAssay(s.obj)<-"RNA"
+DefaultAssay(obj.integrated)<-"RNA"
 marker.list<-differential_gene_exp(obj.integrated, clusters=clusters_num, out_dir=args$output_dir,file_tag=args$file_prefix,verbose=args$verbose)
 
 ##(9c) Feature Plots ##
