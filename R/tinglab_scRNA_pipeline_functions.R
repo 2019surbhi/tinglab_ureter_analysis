@@ -123,7 +123,7 @@ return(s.obj)
 # x.lab - specify which feature to print the histogram for, e.g. LibrarySize or GeneCounts (also X axis label)
 # xlim - upper limit of histogram (leave xlim=0 if no upper threshold is to be applied on the final printed output)
 
-get_histogram<-function(s.obj,out_dir,prefix,x.lab,xlim=0,cutoff='')
+get_histogram<-function(s.obj,out_dir,prefix,x.lab,xlim=0,cutoff='none')
 {
  sample.mat<-s.obj@assays$RNA@counts
 
@@ -161,18 +161,21 @@ return(hist_dat)
 # x_lab - specify which feature to print the histogram for, e.g. LibrarySize or GeneCounts (also X axis label)
 # xlim - upper limit of histogram (leave xlim=0 if no upper threshold is to be applied on the final printed output)
 
-print_histogram_abline<-function(dat,out_dir,label,x_lab,cutoff='',x='',b=1000)
+print_histogram_abline<-function(dat,out_dir,label,x_lab,cutoff='none',x='',b=1000)
 {
  
  hist.title<-paste(label,x_lab,sep='_')
  options(bitmapType='cairo')
  png(paste0(out_dir,hist.title,".png"))
+ 
+ #Procure xlim if not defined
  if(x=='')
-  {   n<-length(dat)
-      x<-c(0,n)
+  {   xu<-range(dat)[2]
+      x<-c(0,xu)
   }
   
-  if(cutoff=='')
+
+  if(cutoff=='none')
   { cat('printing histogram \n')
     hist(dat,main=hist.title,breaks=b,xlab=x_lab,xlim=x)
   }else{
@@ -653,7 +656,7 @@ iterative_clus_by_res<-function(s.obj,res, dims_use,reduction='pca',assay='integ
    {cat("Performing iterative clustering by resolution for PCs 1:",max(dims_use),'\n')}
   DefaultAssay(s.obj)<-assay
 
-  s.obj<-FindNeighbors(s.obj,dims=dims_use,reduction=reduction)
+  s.obj<-FindNeighbors(s.obj,dims=dims_use,reduction=reduction,assay=assay)
   for(i in 1:length(res))
   {
     s.obj<-FindClusters(s.obj, res=res[i])

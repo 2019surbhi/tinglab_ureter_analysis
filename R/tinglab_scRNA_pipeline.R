@@ -389,9 +389,17 @@ out_path<-paste0(args$output_dir,'qc_plots/histograms/raw/')
 x_lab<-c('LibrarySize','GeneCounts','MtPerc')
 x_lim<-c(50000,2000,50)
 
-cutoff_low<-c(args$thresholds[4],args$thresholds[2],args$thresholds[1])
-cutoff_high<-c(args$thresholds[4],args$thresholds[3],args$thresholds[1])
+if(args$thresholds=='')
+{
+    cutoff_low<-rep('none',3)
+    cutoff_high<-rep('none',3)
+}else
+  {
+   cutoff_low<-c(args$thresholds[4],args$thresholds[2],args$thresholds[1])
+   cutoff_high<-c(args$thresholds[4],args$thresholds[3],args$thresholds[1])
+  }
 
+  
 for(i in 1:length(x_lab))
 {
 
@@ -472,6 +480,9 @@ if(length(args$thresholds)>1)
 
   x_lab<-c('LibrarySize','GeneCounts','MtPerc')
   x_lim<-c(50000,2000,50)
+  
+  cutoff_low<-c(args$thresholds[4],args$thresholds[2],args$thresholds[1])
+  cutoff_high<-c(args$thresholds[4],args$thresholds[3],args$thresholds[1])
 
   for(i in 1:length(x_lab))
   {
@@ -637,7 +648,7 @@ DefaultAssay(obj.integrated_RNA)<-'RNA'
 all.genes<-rownames(obj.integrated_RNA)
 obj.integrated_RNA<-ScaleData(obj.integrated_RNA,features=all.genes)
 
-var_genes<-obj.integrated_RNA@assay$integrated@var.features
+var_genes<-obj.integrated_RNA@assays$integrated@var.features
 obj.integrated_RNA<-RunPCA(obj.integrated_RNA,assay='RNA',features=var_genes)
 
 for(i in 1:length(pc))
@@ -675,7 +686,7 @@ for(i in 1:length(pc))
 for(j in 1:length(res))
    {
    sil_run<-paste0(args$file_prefix,'PC',pc[i],'_res',res[j])
-   obj_sil<-iterative_clus_by_res(obj.integrated,res=res[j],dims_use=1:pc[i],verbose=args$verbose)
+   obj_sil<-iterative_clus_by_res(obj.integrated,dims_use=1:pc[i],res=res[j],verbose=args$verbose,reduction='pca',assay='integrated')
     get_silhouette_plot(s.obj=obj_sil,reduction='pca',dims=1:pc[i],out_dir=args$output_dir,file_prefix=sil_run,verbose=args$verbose)
    }
 }
@@ -697,7 +708,7 @@ if(args$verbose)
 {cat('Clustering \n')}
 
 #Find Clusters
-  obj.integrated<-FindNeighbors(obj.integrated, dims=args$pca_dimensions)
+  obj.integrated<-FindNeighbors(obj.integrated, dims=args$pca_dimensions,assay='integrated')
   obj.integrated<-FindClusters(obj.integrated, res=args$cluster_resolution)
 
 #Generate UMAP
@@ -706,7 +717,6 @@ if(args$verbose)
   obj.integrated<-RunUMAP(obj.integrated, reduction="pca", dims=args$pca_dimensions)
 
 #Print UMAPs
-
 if(!dir.exists(paste0(args$output_dir,'umaps/')))
         {dir.create( paste0(args$output_dir,'umaps/'))}
     out_dir<-paste0(args$output_dir,'umaps/')
