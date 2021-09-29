@@ -662,7 +662,7 @@ obj_clustree<-NULL
 clus_run=paste0(args$file_prefix,'PC',pc[i])
 obj_clustree<-iterative_clus_by_res(obj.integrated_RNA, res=res,dims_use=1:pc[i],verbose=args$verbose,assay='RNA')
 
-print_geneplots_on_clustree(obj_clustree,genes=args$gene_list, fun_use='median',assay='RNA',prefix='RNA_snn_res.', out_dir=argv$output_dir,run_tag=clus_run, verbose=FALSE)
+print_geneplots_on_clustree(obj_clustree,genes=args$gene_list, fun_use='median',assay='RNA',prefix='RNA_snn_res.', out_dir=args$output_dir,file_prefix=clus_run, verbose=FALSE)
 }
 
 rm(clus_run)
@@ -725,14 +725,17 @@ if(!dir.exists(paste0(args$output_dir,'umaps/')))
         {dir.create( paste0(args$output_dir,'umaps/'))}
     out_dir<-paste0(args$output_dir,'umaps/')
 
-customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group=NULL,split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
-customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='orig.ident',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
+customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group=NULL,split=NULL,dot=0.3,save=TRUE,out=out_dir,file_prefix=args$file_prefix)
+
+customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='orig.ident',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_prefix=args$file_prefix)
 
 if(args$meta_file!='')
 {
- customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='sex',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
- customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='age',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
- customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='normal_tumor',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_tag=args$file_prefix)
+ customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='sex',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_prefix=args$file_prefix)
+ 
+ customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='age',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_prefix=args$file_prefix)
+ 
+ customized_umap(obj.integrated, umap_cols=NULL,label=TRUE,title=NULL, group='normal_tumor',split=NULL,dot=0.3,save=TRUE,out=out_dir,file_prefix=args$file_prefix)
 }
  
 ## Save clustered seurat objects ##
@@ -765,7 +768,7 @@ write.csv (tab2,paste0(args$output_dir,args$file_prefix,"cells_by_cluster_by_sam
 
 clusters_num<-levels(obj.integrated$seurat_clusters)
 DefaultAssay(obj.integrated)<-"RNA"
-marker.list<-differential_gene_exp(obj.integrated, clusters=clusters_num, out_dir=args$output_dir,file_tag=args$file_prefix,verbose=args$verbose)
+marker.list<-differential_gene_exp(obj.integrated, clusters=clusters_num, out_dir=args$output_dir,file_prefix=args$file_prefix,verbose=args$verbose)
 
 ##(9c) Feature Plots ##
 
@@ -844,7 +847,7 @@ rm(h1)
 # Plot Heatmap for RNA assay
 
 DefaultAssay(obj.integrated)<-'RNA'
-#obj.integrated<-ScaleData(obj.integrated, features=rownames(obj.integrated))
+obj.integrated<-ScaleData(obj.integrated, features=rownames(obj.integrated))
 h2<-DoHeatmap(obj.integrated,features=heatmap_features)
 ggsave(paste0(args$file_prefix,"Heatmap_RNA.pdf"),path=args$output_dir,width=22,height=17,units="in",h2)
 

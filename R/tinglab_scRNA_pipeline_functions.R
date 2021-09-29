@@ -484,7 +484,7 @@ get_var_genes_plot<-function(s.obj,verbose=FALSE)
 customized_umap<-function(s.obj,umap_cols=NULL,label=FALSE,title=NULL, group=NULL,split=NULL,dot=0.3,save=FALSE,out='./',file_prefix,h=8,w=8,reduction='umap')
 {
     ns<-s.obj@meta.data$sample %>% unique %>% length()
-    nc<-ncol(obj)
+    nc<-ncol(s.obj)
 
     if(is.null(title)==TRUE)
     {
