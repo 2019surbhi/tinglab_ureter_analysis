@@ -7,7 +7,7 @@ Here are examples of how to run the script
 
   **(a) Inputs from Single flowcell**
 
-/path/to/script/tinglab_scRNA_pipeline.R -i /path/to/cellranger/ouput/flowcell1/ -f file_prefix -o path/to/output/dir/ -s sample1,sample2,sample3,sample4 -t mt,gene_low,gene_high,lib_low,lib_high -c 20 -v -q -u clustree -g all -d 1:30 -e 0.2
+`/path/to/script/tinglab_scRNA_pipeline.R -i /path/to/cellranger/ouput/flowcell1/ -f file_prefix -o path/to/output/dir/ -s sample1,sample2,sample3,sample4 -t mt,gene_low,gene_high,lib_low,lib_high -c 20 -v -q -u clustree -g all -d 1:30 -e 0.2`
 
 *Notes:*
 * Leave out -s argument to load all samples
@@ -20,14 +20,14 @@ Here are examples of how to run the script
 
  **(b) Inputs from Multiple flowcells**
 
-/path/to/script/tinglab_scRNA_pipeline.R -i /path/to/cellranger/ouput/flowcell1/:path/to/cellranger/output/flowcells2/ -f file_prefix -o path/to/output/dir/ -s sample1,sample2,sample3:sample11,sample12,sample13 -t mt,gene_low,gene_high,lib_low,lib_high -c 20 -v -q -u clustree -g all
+`/path/to/script/tinglab_scRNA_pipeline.R -i /path/to/cellranger/ouput/flowcell1/:path/to/cellranger/output/flowcells2/ -f file_prefix -o path/to/output/dir/ -s sample1,sample2,sample3:sample11,sample12,sample13 -t mt,gene_low,gene_high,lib_low,lib_high -c 20 -v -q -u clustree -g all`
 
 *Notes:*
 * again leave out -s argument if all samples are to be loaded from both (or more) flowcells
 
 **2) Using Seurat object (Subset analysis)**
 
-/path/to/script/tinglab_scRNA_pipeline.R -b /path/to/seurat/object/seruat_object.rds -r file_prefix -o path/to/output/dir/ -l 0,1,2,5,6 -c 20 -v -u clustree -g all
+`/path/to/script/tinglab_scRNA_pipeline.R -b /path/to/seurat/object/seruat_object.rds -r file_prefix -o path/to/output/dir/ -l 0,1,2,5,6 -c 20 -v -u clustree -g all`
 
 *Notes:*
 * -l specifies clusters to be inlcuded in the subset analysis
