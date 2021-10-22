@@ -446,7 +446,7 @@ if(length(args$thresholds)>1)
  rm(tab_list)
  rm(tab)
 
- # Filter low quality cells [only to compute post filter values, actual filtering not performed at this point]
+ # Filter low quality cells
  obj_tab_list<-lapply(X=(1:length(obj.list)), FUN=function(x){filter_cells(obj.list[[x]],mt.thres=args$thresholds[1], genecnt.thres=args$thresholds[2:3], libsize.thres=args$thresholds[4:5], verbose=args$verbose)})
 
  obj.list<-do.call(c,(lapply(obj_tab_list,`[[`,1)))
@@ -532,9 +532,11 @@ obj.list<-lapply(obj.list[1:length(obj.list)],pre_process, hvg=args$hvg, verbose
 if(!dir.exists(paste0(args$output_dir,'variable_genes/')))
   {dir.create( paste0(args$output_dir,'variable_genes/'))}
 out_path<-paste0(args$output_dir,'variable_genes/')
+
 lapply(obj.list[1:length(obj.list)],get_var_genes,out_dir=out_path,verbose=args$vebose)
 
  varplots<-lapply(obj.list[1:length(obj.list)],get_var_genes_plot,verbose=args$verbose)
+
  pdf(file=paste0(out_path,args$file_prefix,'VariableGenePlots.pdf'),paper='a4')
  print(varplots)
  dev.off()
@@ -752,6 +754,9 @@ if((args$save=='final')||(args$save=='both'))
 ###(9) Post-clustering downstream analysis ###
 
 ##(9a) Cell proportion table ##
+if(args$verbose)
+{cat('Get Cell proportion table \n')}
+
 tab<-table(Idents(obj.integrated),obj.integrated@meta.data$orig.ident)
 
 #Convert to data frame
@@ -854,6 +859,9 @@ ggsave(paste0(args$file_prefix,"Heatmap_RNA.pdf"),path=args$output_dir,width=22,
 rm(h2)
 
 ##(9e) Dendrogram ###
+
+if(args$verbose)
+{cat('Get Dendrogram \n')}
 
 plot_dendrogram(obj.integrated,args$file_prefix,features=heatmap_features,out_dir=args$output_dir)
 
