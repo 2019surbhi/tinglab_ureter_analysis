@@ -1,4 +1,3 @@
-   #last edited: 2021_09_20
 
 # scRNA seq Seurat pipeline FUNCTIONS [based on Satija lab's Seurat tool]
 # Developers: Surbhi Sona (TING lab) and Jean Clemenceau
