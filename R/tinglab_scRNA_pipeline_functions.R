@@ -1,6 +1,6 @@
 
 # scRNA seq Seurat pipeline FUNCTIONS [based on Satija lab's Seurat tool]
-# Developers: Surbhi Sona (TING lab) and Jean Clemenceau
+# Authors: Surbhi Sona (TING lab) and Jean Clemenceau
 
 #!/usr/bin/env Rscript
 
