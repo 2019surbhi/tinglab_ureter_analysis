@@ -80,7 +80,7 @@ parser<-add_argument(
   short = '-t',
   type="character",
   default='',
-  help="Enter QC thresholds for mt%, gene count (lower and upper cutoffs), and library size cutoff (lower and upper cutiffs) Format: <% MT genes>,<gene count lower cutoff>,<gene count upper cutoff>,<libsize low cutoff>,<libsize high cutoff>'")
+  help="Enter QC thresholds for mt%, gene count (lower and upper cutoffs), and UMI count cutoff (lower and upper cutiffs) Format: <% MT genes>,<gene count lower cutoff>,<gene count upper cutoff>,<libsize low cutoff>,<libsize high cutoff>'")
 
 parser<-add_argument(
   parser,
