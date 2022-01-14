@@ -456,19 +456,6 @@ if(length(args$thresholds)>1)
  write.csv(cell.data2,paste0(args$output_dir,args$file_prefix,"cell_threhold_table.csv"))
 
  rm(obj_tab_list)
- #cell.data<-do.call(c,lapply(cell_tab_list))
-
- # Get threhold plots
- cell.data$rank[order(cell.data$thr.cell.cnt,decreasing = TRUE)]<- c(1:nrow(cell.data))
- if(args$verbose){
-    cat("Exporting cell count plots",sep='\n')}
- threshold_plots<-plot_threshold_effects(cell.data,args$thresholds,args$file_prefix)
- pdf(file=paste0(args$output_dir,args$file_prefix,"thresholds.pdf"),paper='a4',width=8)
- lapply(threshold_plots,print)
- dev.off()
-
- rm(threshold_plots)
- rm(cell.data)
 
  ## Get post filtering plots ## (optional)
  if(args$qc_plots)
@@ -849,15 +836,6 @@ ggsave(paste0(args$file_prefix,"Heatmap_integrated.pdf"),path=args$output_dir,wi
 
 rm(h1)
  
-# Plot Heatmap for RNA assay
-
-DefaultAssay(obj.integrated)<-'RNA'
-obj.integrated<-ScaleData(obj.integrated, features=rownames(obj.integrated))
-h2<-DoHeatmap(obj.integrated,features=heatmap_features)
-ggsave(paste0(args$file_prefix,"Heatmap_RNA.pdf"),path=args$output_dir,width=22,height=17,units="in",h2)
-
-rm(h2)
-
 ##(9e) Dendrogram ###
 
 if(args$verbose)
