@@ -22,11 +22,11 @@ The pipeline reads aligned data resulting from the cellranger's standard pipelin
 <p> (7) Clustering optimization - Generate Clustree and Silhouette plots (optional)
 <p> (7) Clustering - Number of PCs and resolution can be defined else runs with default value of 50 PCs and clusters at resolution 0.5
 <p> (8) Post clustering analysis
-       <p> (a) Cell proportion table
-       <p> (b) Differential gene expression
-       <p> (c) Feature plots (for top 9-20 differential markers per cluster)
-       <p> (d) Heatmap (for top15 cluster markers)
-       <p> (e) Dendrogram
+       <p> &emsp; (a) Cell proportion table
+       <p> &emsp; (b) Differential gene expression
+       <p> &emsp; Feature plots (for top 9-20 differential markers per cluster)
+       <p> &emsp; (d) Heatmap (for top15 cluster markers)
+       <p> &emsp; (e) Dendrogram
 
 ## Content
 
