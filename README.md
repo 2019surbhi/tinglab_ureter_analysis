@@ -7,9 +7,9 @@ This repository harbors analysis code and files relevent to scRNA sequencing ana
 
 This code repository utilizes a conventional and popular published scRNA analysis tool- [Seuratv3.2.1](https://www.sciencedirect.com/science/article/pii/S0092867419305598?via%3Dihub), and other available Bioinfirmatics tools, to explore the cellular heterogenity of the human ureters (n=10) using 10X Genomics 3' single cell RNA sequencing platform.
 
-## Pipeline Overview
+### (A) Seurat-based pipeline 
 
-### Seurat-based pipeline 
+#### 1. Overview
 
 The pipeline reads aligned data resulting from the cellranger's standard pipelines - [mkfastq](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-mkfastq) and [count](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-count). It runs the following set of analysis using 
 
@@ -26,13 +26,22 @@ The pipeline reads aligned data resulting from the cellranger's standard pipelin
        <p> &emsp; (b) Differential gene expression
        <p> &emsp; Feature plots (for top 9-20 differential markers per cluster)
        <p> &emsp; (d) Heatmap (for top15 cluster markers)
-       <p> &emsp; (e) Dendrogram
+       <p> &emsp; (e) Dendrogram (again based on top15 differential markers)
 
-## Content
+#### 2.Scripts and Documentation
 
 * [R](https://github.com/2019surbhi/tinglab_ureter_analysis/tree/main/R): `R` package code
   * [tinglab_scRNA_pipeline_functions.R](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline_functions.R) - user defined functions of customized version of standard functions needed to run the pipeline (Please make sure to download this in the currecnt directory or add correct path to this script in the main script to source these functions). Each function provides a brief description of the required and optional variables with their default values also noted.
   *  [tinglab_scRNA_pipeline.R](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline.R) - main script to run the pipeline from start to finish.
 * [Documents](https://github.com/2019surbhi/tinglab_ureter_analysis/tree/main/Documentation): Contains instructions on running this pipeline     
 
+#### 3. Dependies
+              
+##### (1) Hardware requirements
 
+* **System Requirements:** For our current dataset we performed this analysis on HPC (using 30 cores and 110 GB memory). The document section of this repository describes how this can be run on a similar High Performance computing systems. We will soon add smaller dataset examples that may be run on a standalone desktop. 
+       For larger dataset like ours, the Seurat batch correction and integration step is the memory intensive process but the rest of the analyses post integration can be easily run on standalone laptop/PC with 4+ cores and 4+ GB RAM (Tested on macOS Catalina v10.15.17, 2.5 Ghz, 16GB RAM). 
+* **Memory** Please note that Seurat object size ranges from few hundred MBs to several GBs depending on size of dataset size (Seurat object for our ureter dataset with 10 samples is 14.33 GB in size), so ensure there is sufficient storage memory available to save Seurat object(s) and other outputs. The pipeline allows saving either or both *integrated* and *clustered* objects and we advise users to save the *integrated* version to allow flexibilities for using this for clustering with different clustering parameters and other post clustering analysis. 
+       
+ 
+              
