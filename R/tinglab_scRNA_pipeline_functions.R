@@ -194,9 +194,9 @@ dev.off()
 # out_dir - path where the cell count table will be saved
 # mt.thres - Mitchondrial %  (or % mt) threshold (cells with % mt > than the value will be filtered out)
 # genecnt.thres - a vector of 2 integers definining lower and higher gene count thresholds for filtering
-# libsize.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
+# umi.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
 
-get_cell_table<-function(s.obj,out_dir,mt.thres, genecnt.thres, libsize.thres, verbose=FALSE)
+get_cell_table<-function(s.obj,out_dir,mt.thres, genecnt.thres, umi.thres, verbose=FALSE)
 {
 
 if(verbose){
@@ -211,21 +211,21 @@ if(verbose){
  
  gene.thres.cells<-subset(s.obj,subset=nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2]) %>% ncol()
  
- libsize.thres.cells<-subset(s.obj,subset=nCount_RNA>libsize.thres[1] & nCount_RNA<libsize.thres[2]) %>% ncol()
+ umi.thres.cells<-subset(s.obj,subset=nCount_RNA>umi.thres[1] & nCount_RNA<umi.thres[2]) %>% ncol()
   
- gene_lib.thres.cells<-subset(s.obj,subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2] & nCount_RNA>libsize.thres[1] & nCount_RNA<libsize.thres[2]) %>% ncol()
+ gene_lib.thres.cells<-subset(s.obj,subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2] & nCount_RNA>umi.thres[1] & nCount_RNA<umi.thres[2]) %>% ncol()
 
  gene_mt.thres.cells<-subset(s.obj, subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2] & perc.mt<mt.thres) %>% ncol()
 
- lib_mt.thres.cells<-subset(s.obj,subset= nCount_RNA>libsize.thres[1] & nCount_RNA<libsize.thres[2] & perc.mt<mt.thres) %>% ncol()
+ lib_mt.thres.cells<-subset(s.obj,subset= nCount_RNA>umi.thres[1] & nCount_RNA<umi.thres[2] & perc.mt<mt.thres) %>% ncol()
 
- gene_lib_mt.thres.cells<-subset(s.obj, subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2] & nCount_RNA>libsize.thres[1] & nCount_RNA<libsize.thres[2] & perc.mt<mt.thres) %>% ncol()
+ gene_lib_mt.thres.cells<-subset(s.obj, subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2] & nCount_RNA>umi.thres[1] & nCount_RNA<libsize.thres[2] & perc.mt<mt.thres) %>% ncol()
 
 if(verbose){
     cat(paste0(s.obj@project.name,'- Creating cell table'),sep='\n')
   }
 
-cell_table<-data.frame(raw.cell.cnt, mt.thres.cells,gene.thres.cells,libsize.thres.cells,gene_lib.thres.cells, gene_mt.thres.cells, lib_mt.thres.cells, gene_lib_mt.thres.cells)
+cell_table<-data.frame(raw.cell.cnt, mt.thres.cells,gene.thres.cells,umi.thres.cells,gene_lib.thres.cells, gene_mt.thres.cells, lib_mt.thres.cells, gene_lib_mt.thres.cells)
 
 row.names(cell_table)<-s.obj@project.name
 
@@ -237,9 +237,9 @@ return(cell_table)
 # s.obj - seurat obj to apply the filters to
 # mt.thres - Mitchondrial %  (or % mt) threshold (cells with % mt > than the value will be filtered out)
 # genecnt.thres - a vector of 2 integers definining lower and higher gene count thresholds for filtering
-# libsize.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
+# umi.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
 
-filter_cells<-function(s.obj,mt.thres, genecnt.thres, libsize.thres, verbose=FALSE)
+filter_cells<-function(s.obj,mt.thres, genecnt.thres, umi.thres, verbose=FALSE)
 {
  if(verbose)
    { 
@@ -255,7 +255,7 @@ filter_cells<-function(s.obj,mt.thres, genecnt.thres, libsize.thres, verbose=FAL
 # Apply threholds
 
 s.obj<-subset(s.obj, subset= nFeature_RNA>genecnt.thres[1] & nFeature_RNA<genecnt.thres[2])
-s.obj<-subset(s.obj,subset= nCount_RNA>libsize.thres[1] & nCount_RNA<libsize.thres[2])
+s.obj<-subset(s.obj,subset= nCount_RNA>umi.thres[1] & nCount_RNA<umi.thres[2])
 s.obj<-subset(s.obj,perc.mt<mt.thres)
 
  #Get thresholded metrics
