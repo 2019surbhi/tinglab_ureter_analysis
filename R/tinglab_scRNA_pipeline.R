@@ -3,7 +3,7 @@
 # scRNA analysis based on Seurat [https://satijalab.org/seurat/articles/pbmc3k_tutorial.html]
 # Authors: Surbhi Sona and Jean Clemenceu
 
-source('/home/sonas/beegfs/scripts/R/tinglab_scRNA_pipeline_functions.R')
+source('./tinglab_scRNA_pipeline_functions.R')
 
 library(argparser)
 
