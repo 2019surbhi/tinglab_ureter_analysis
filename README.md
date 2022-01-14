@@ -7,7 +7,7 @@ This repository harbors analysis code and files relevent to scRNA sequencing ana
 
 This code repository utilizes a conventional and popular published scRNA analysis tool- [Seuratv3.2.1](https://www.sciencedirect.com/science/article/pii/S0092867419305598?via%3Dihub), and other available Bioinfirmatics tools, to explore the cellular heterogenity of the human ureters (n=10) using 10X Genomics 3' single cell RNA sequencing platform.
 
-### (A) Seurat-based pipeline 
+### Seurat-based pipeline 
 
 #### 1. Overview
 
