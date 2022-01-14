@@ -422,23 +422,29 @@ s.obj.integrated@project.name<-project.name
 ### Function to add metadata to Seurat object ###
 ## Note: This function needs to be adapted as per your metafile format (add or modify column names, as needed) ##
 # s.obj - seurat obj to add the meta data to
-# meta_file - file containing metadata (stored in the format: rows = sample and column = meta data)
+# meta_file - file containing metadata (stored in the format: rows = sample and column = meta data); accepted formats are csv and xlsx
 
 add_metadata<-function(s.obj,meta_file)
 {
-  #Import metadata
-  
-  metadata<- fread(meta_file,header = TRUE,stringsAsFactors = TRUE)
+ 
+  # Determine file type and import data
+  if(length(grep('.csv',meta_file))!=0)
+   {
+    metadata<- fread(meta_file,header = TRUE,stringsAsFactors = TRUE)
+    }else
+	  {
+	   metadata<-read_xlsx(meta_file)
+	  }
+  # Match metadata by sample id
   indx<- match(s.obj@meta.data$orig.ident,metadata$sample_id)
   
-  #Add Sex data
-  s.obj[['sex']]<- metadata$Sex[indx]
-  
-  #Add Age data
-  s.obj[['age']]<- metadata$Age[indx]
-  
-  #Add Normal/Tumor data
-  s.obj[['normal_tumor']]<- metadata$Normal_Tumor[indx]
+  # Determine metadata types
+  meta_cols<-colnames(metadata)
+  for(i in 1:length(meta_cols)
+     {
+ 	s.obj[[meta_cols[i]]]<-metadata[[meta_cols[i]]]	  
+	     
+     }
   
   return(s.obj)
 }
