@@ -386,7 +386,7 @@ if(!dir.exists(paste0(args$output_dir,'qc_plot/histograms/raw')))
         {dir.create(file.path("qc_plots","histograms","raw"), recursive = TRUE)}
 out_path<-paste0(args$output_dir,'qc_plots/histograms/raw/')
 
-x_lab<-c('LibrarySize','GeneCounts','MtPerc')
+x_lab<-c('UMI_counts','GeneCounts','MtPerc')
 x_lim<-c(50000,2000,50)
 
 if(args$thresholds=='')
@@ -478,7 +478,7 @@ if(length(args$thresholds)>1)
         {dir.create(file.path("qc_plots","histograms","post_filter"), recursive = TRUE)}
   out_path<-paste0(args$output_dir,'qc_plots/histograms/post_filter/')
 
-  x_lab<-c('LibrarySize','GeneCounts','MtPerc')
+  x_lab<-c('UMI_counts','GeneCounts','MtPerc')
   x_lim<-c(50000,2000,50)
   
   cutoff_low<-c(args$thresholds[4],args$thresholds[2],args$thresholds[1])
