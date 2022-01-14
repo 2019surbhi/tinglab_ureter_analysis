@@ -17,7 +17,7 @@ parser<-add_argument(
   short = '-i',
   type="character",
   default='./',
-  help="Enter input directory path in the format /path/to/input_dir/ Default=./ ")
+  help="Enter input directory path in the format /path/to/input_dir/ In case of multiple paths, separate them by ':' Default=./ ")
 
 parser<-add_argument(
   parser,
@@ -80,7 +80,7 @@ parser<-add_argument(
   short = '-t',
   type="character",
   default='',
-  help="Enter QC thresholds for mt%, gene count (lower and upper cutoffs), and UMI count cutoff (lower and upper cutiffs) Format: <% MT genes>,<gene count lower cutoff>,<gene count upper cutoff>,<libsize low cutoff>,<libsize high cutoff>'")
+  help="Enter QC thresholds for mt%, gene count (lower and upper cutoffs), and UMI count cutoff (lower and upper cutiffs) Format: <% MT genes>,<gene count lower cutoff>,<gene count upper cutoff>,<UMI count low cutoff>,<UMI count high cutoff>'")
 
 parser<-add_argument(
   parser,
@@ -88,7 +88,7 @@ parser<-add_argument(
   short = '-y',
   default=2000,
   type='numeric',
-  help="Enter the number of highly variable genes to be used for clustering. Defulat = 2000")
+  help="Enter the number of highly variable genes to be used for clustering. Default = 2000")
 
 parser<-add_argument(
   parser,
@@ -104,7 +104,7 @@ parser<-add_argument(
   short = '-e',
   type='numeric',
   default=0.5,
-  help="Enter clustering resolution. Default =0.5. Needs to be optimized for each dataset [a helpful tool: clustree]")
+  help="Enter clustering resolution. Default =0.5. Needs to be optimized for each dataset. We provide an option to generate Clustree and Silhouette plots to assess optimal parameters")
 
 parser<-add_argument(
   parser,
