@@ -41,7 +41,13 @@ The pipeline reads aligned data resulting from the cellranger's standard pipelin
 
 * **System Requirements:** For our current dataset we performed this analysis on HPC (using 30 cores and 110 GB memory). The document section of this repository describes how this can be run on a similar High Performance computing systems. We will soon add smaller dataset examples that may be run on a standalone desktop. 
        For larger dataset like ours, the Seurat batch correction and integration step is the memory intensive process but the rest of the analyses post integration can be easily run on standalone laptop/PC with 4+ cores and 4+ GB RAM (Tested on macOS Catalina v10.15.17, 2.5 Ghz, 16GB RAM). 
+
 * **Memory** Please note that Seurat object size ranges from few hundred MBs to several GBs depending on size of dataset size (Seurat object for our ureter dataset with 10 samples is 14.33 GB in size), so ensure there is sufficient storage memory available to save Seurat object(s) and other outputs. The pipeline allows saving either or both *integrated* and *clustered* objects and we advise users to save the *integrated* version to allow flexibilities for using this for clustering with different clustering parameters and other post clustering analysis. 
        
- 
+ ##### (2) Software requirements
+              
+  * This pipeline runs on `R` platform (tested on v3.2 and v4.0)
+  * The users will additionally need to install R packages like `Seurat` and other dependies mentined in the scRNA functions [script](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline_functions.R)
+  * **Version**: To closely match our results, please run the pipeline on Seurat v3.2. However, the pipeline has been also tested on Seurat v4.0 using R v4.0 resulting in no major functional differences in the outputs. The same is true for other R pacakges used in the pipeline.
+              
               
