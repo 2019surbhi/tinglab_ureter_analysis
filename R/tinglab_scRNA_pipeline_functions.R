@@ -119,7 +119,7 @@ return(s.obj)
 # s.obj - Seurat object to create histogram for
 # out_dir - directory path to save histograms at
 # prefix - Any prefix (other than sample name) to add to each histogram output
-# x.lab - specify which feature to print the histogram for, e.g. LibrarySize or GeneCounts (also X axis label)
+# x.lab - specify which feature to print the histogram for, e.g. UMI_counts or GeneCounts (also X axis label)
 # xlim - upper limit of histogram (leave xlim=0 if no upper threshold is to be applied on the final printed output)
 
 get_histogram<-function(s.obj,out_dir,prefix,x.lab,xlim=0,cutoff='none')
@@ -129,7 +129,7 @@ get_histogram<-function(s.obj,out_dir,prefix,x.lab,xlim=0,cutoff='none')
  s_id<-s.obj@project.name
  name<-paste0(prefix,s_id)
 
- if(x.lab=="LibrarySize")
+ if(x.lab=="UMI_counts")
      {
       x.lim<-c(0,xlim)
       hist_dat<-Matrix::colSums(sample.mat)
@@ -154,10 +154,10 @@ return(hist_dat)
 }
 
 ## This function prints histogram for a given data with a red line specifying the user defined filtering cutoff ##
-# dat - data to plot histogram for (gene count/library size/ mitochondrial percentage)
+# dat - data to plot histogram for (gene count/UMI count/ mitochondrial percentage)
 # out_dir - directory path to save histograms at
 # label - Any prefix (other than sample name) to add to each histogram output
-# x_lab - specify which feature to print the histogram for, e.g. LibrarySize or GeneCounts (also X axis label)
+# x_lab - specify which feature to print the histogram for, e.g. UMI_count or GeneCounts (also X axis label)
 # xlim - upper limit of histogram (leave xlim=0 if no upper threshold is to be applied on the final printed output)
 
 print_histogram_abline<-function(dat,out_dir,label,x_lab,cutoff='none',x='',b=1000)
@@ -194,7 +194,7 @@ dev.off()
 # out_dir - path where the cell count table will be saved
 # mt.thres - Mitchondrial %  (or % mt) threshold (cells with % mt > than the value will be filtered out)
 # genecnt.thres - a vector of 2 integers definining lower and higher gene count thresholds for filtering
-# libsize.thres - a vector of 2 integers definining lower and higher library size thresholds for filtering
+# libsize.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
 
 get_cell_table<-function(s.obj,out_dir,mt.thres, genecnt.thres, libsize.thres, verbose=FALSE)
 {
@@ -237,7 +237,7 @@ return(cell_table)
 # s.obj - seurat obj to apply the filters to
 # mt.thres - Mitchondrial %  (or % mt) threshold (cells with % mt > than the value will be filtered out)
 # genecnt.thres - a vector of 2 integers definining lower and higher gene count thresholds for filtering
-# libsize.thres - a vector of 2 integers definining lower and higher library size thresholds for filtering
+# libsize.thres - a vector of 2 integers definining lower and higher UMI count thresholds for filtering
 
 filter_cells<-function(s.obj,mt.thres, genecnt.thres, libsize.thres, verbose=FALSE)
 {
@@ -323,8 +323,6 @@ plot_threshold_effects<-function(plot.data,thresholds,title.root)
   plots<-list(cell.cnt.thres.plot, gene.cnt.thres.plot, gene.cnt.range.thres.plot)
   return(plots)
 }
-
-
 
 ### Funtion to pre-process data ###
 ## This function processes seurat obj prior to batch correction or other downstream analysis. The seurat obj is normalized and variable genes are calculated for a given sample ##
