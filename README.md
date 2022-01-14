@@ -47,7 +47,7 @@ The pipeline reads aligned data resulting from the cellranger's standard pipelin
  ##### (2) Software requirements
               
   * This pipeline runs on `R` platform (tested on v3.2 and v4.0)
-  * The users will additionally need to install R packages like `Seurat` and other dependies mentined in the scRNA functions [script](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline_functions.R)
+  * The users will additionally need to install R packages like `Seurat` and others pacakges mentioned in the scRNA functions [script](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline_functions.R)
   * **Version**: To closely match our results, please run the pipeline on Seurat v3.2. However, the pipeline has been also tested on Seurat v4.0 using R v4.0 resulting in no major functional differences in the outputs. The same is true for other R pacakges used in the pipeline.
               
               
