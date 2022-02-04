@@ -6,7 +6,7 @@
 
 **1. Printing collapsed heatmap - using our stromal subset as example**
 
-**Specify cluster order** (We grouped/ordered these clusters in our pblication based on gene expression similarities/dissimilarities)
+**Specify cluster order** (We grouped/ordered these clusters in our publication based on gene expression similarities/dissimilarities)
 
 `clus_order_stromal<-c(1,6,2,5,4,3,0)`
 
