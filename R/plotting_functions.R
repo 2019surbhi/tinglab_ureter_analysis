@@ -159,7 +159,7 @@ print_mean_exp_per_cluster_heatmap<-function(obj,assay='integrated',slot='data',
   hmcols<-colorRampPalette(col)(256)
   
   # Heatmap name
-  name<-'mean_expression'
+  name<-paste0('mean_expression (',slot,' slot)')
   fname<-paste0(out,file_prefix,name,'.png')
   
   # Print heatmap
