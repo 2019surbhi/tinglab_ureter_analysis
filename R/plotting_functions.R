@@ -1,3 +1,12 @@
+library(Seurat)
+
+library(ComplexHeatmap)
+library(RColorBrewer)
+library(ggplot2)
+
+library(openxlsx)
+library(dplyr)
+
 ##### Collapsed Heatmap Functions #####
 
 ### Get differential marker table function ###
