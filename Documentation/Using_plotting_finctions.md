@@ -12,7 +12,7 @@
 
 **Specify colors**
 
-`cols_s<-'#BFEF45,#009FFF,#FF00BF,#3CB44B,#469990,#FFBF00,#FF0000'`
+`cols_s<-'#009FFF,#FF0000,#FF00BF,#FFBF00,#469990,#3CB44B,#BFEF45'`
 
 `cols_s<-unlist(strsplit(cols_s,split=','))`
 
