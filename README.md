@@ -35,7 +35,7 @@ The pipeline reads aligned data resulting from the cellranger's standard pipelin
   *  [tinglab_scRNA_pipeline.R](https://github.com/2019surbhi/tinglab_ureter_analysis/blob/main/R/tinglab_scRNA_pipeline.R) - main script to run the pipeline from start to finish.
 * [Documents](https://github.com/2019surbhi/tinglab_ureter_analysis/tree/main/Documentation): Contains instructions on running this pipeline     
 
-#### 3. Dependies
+#### 3. Dependencies
               
 ##### (1) Hardware requirements
 
