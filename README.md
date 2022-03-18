@@ -11,7 +11,7 @@ This code repository utilizes a conventional and popular published scRNA analysi
 
 #### 1. Overview
 
-The pipeline reads aligned data resulting from the cellranger's standard pipelines - [mkfastq](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-mkfastq) and [count](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-count). It runs the following set of analysis using 
+The pipeline reads aligned data resulting from the cellranger's standard pipelines - [mkfastq](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-mkfastq) and [count](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count#cr-count). It runs the following set of analysis steps: 
 
 <p> (1) Load data and create Seurat object
 <p> (2) Quality Control (Filter low quality cells based on abberent mitochondrial gene%, gene counts and UMI counts)
